@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual SPO — Guia Completo</title>
+<style>
+  :root{
+    --bg:#050505; --surface:rgba(14,10,4,.85); --surface2:rgba(22,15,5,.8);
+    --border:rgba(212,175,55,.18); --gold:#D4AF37; --gold-l:#F2D777; --gold-d:#9A7B2A;
+    --text:#F5F0E8; --text2:#A89060; --text3:#6b5d3a;
+    --green:#4ADE80; --red:#F87171; --blue:#60A5FA; --amber:#FBBF24; --purple:#a78bfa;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Arial,sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(212,175,55,.08),transparent 70%);pointer-events:none;z-index:0}
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+  .serif{font-family:'Cinzel',Georgia,serif}
+
+  header{text-align:center;padding:64px 0 30px}
+  .crown{font-size:36px;color:var(--gold);margin-bottom:14px}
+  .eyebrow{font-size:11px;letter-spacing:.42em;color:var(--gold);text-transform:uppercase;margin-bottom:18px}
+  h1{font-family:'Cinzel',Georgia,serif;font-weight:600;font-size:clamp(30px,7vw,52px);line-height:1.05;letter-spacing:-.01em}
+  .sub{color:var(--text2);font-size:15px;margin-top:18px;max-width:560px;margin-left:auto;margin-right:auto}
+
+  /* indice */
+  .indice{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 28px;margin:30px 0}
+  .indice .it{font-size:11px;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;margin-bottom:16px;text-align:center}
+  .indice a{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:8px;text-decoration:none;color:var(--text);transition:.2s;border:1px solid transparent}
+  .indice a:hover{background:var(--surface2);border-color:var(--border)}
+  .indice .in{width:34px;height:34px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .indice .tx{flex:1}
+  .indice .tt{font-size:15px;color:var(--gold-l);font-weight:600}
+  .indice .ds{font-size:12px;color:var(--text2)}
+  .indice .ar{color:var(--gold-d);font-size:18px}
+
+  .bloco{padding:46px 0;border-top:1px solid var(--border)}
+  .cap-eyebrow{font-size:11px;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+  .cap-title{font-family:'Cinzel',Georgia,serif;font-weight:600;font-size:30px;color:var(--gold-l);margin-bottom:20px;line-height:1.1}
+
+  h3{font-family:'Cinzel',Georgia,serif;font-weight:600;font-size:19px;color:var(--text);margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+  h3 .n{width:26px;height:26px;border-radius:50%;background:var(--gold);color:#0a0700;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-family:Inter}
+  p{color:var(--text2);font-size:14.5px;margin-bottom:14px}
+  p b{color:var(--text);font-weight:600}
+  .gold{color:var(--gold-l)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;margin-bottom:14px}
+  .card-t{font-size:14px;color:var(--gold-l);font-weight:600;margin-bottom:8px}
+  .row{display:flex;gap:14px;margin-bottom:10px;align-items:flex-start}
+  .row .k{flex-shrink:0;width:120px;font-size:13px;color:var(--gold);font-weight:600}
+  .row .v{font-size:13.5px;color:var(--text2)}
+  @media(max-width:520px){.row{flex-direction:column;gap:2px}.row .k{width:auto}}
+
+  .pecas{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}
+  @media(max-width:620px){.pecas{grid-template-columns:1fr}}
+  .peca{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 16px;text-align:center}
+  .peca .ico{font-size:28px;margin-bottom:10px}
+  .peca .nome{font-family:'Cinzel',Georgia,serif;font-size:16px;color:var(--gold-l);margin-bottom:6px}
+  .peca .papel{font-size:12px;color:var(--text2);line-height:1.5}
+
+  .fluxo{margin:18px 0}
+  .etapa{display:flex;gap:14px;padding:14px 0;position:relative}
+  .etapa:not(:last-child)::after{content:"";position:absolute;left:19px;top:46px;bottom:-14px;width:2px;background:linear-gradient(var(--border),transparent)}
+  .etapa .dot{flex-shrink:0;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;border:1px solid var(--border);background:var(--surface2);z-index:1}
+  .etapa .q{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:3px;font-weight:600;color:var(--gold)}
+  .etapa .tt{font-size:15px;color:var(--text);font-weight:600;margin-bottom:4px}
+  .etapa .dd{font-size:13px;color:var(--text2)}
+
+  .funil{margin:18px 0}
+  .nivel{display:flex;gap:14px;align-items:flex-start;padding:14px 0;position:relative}
+  .nivel:not(:last-child)::after{content:"↓";position:absolute;left:24px;bottom:-4px;color:var(--gold-d);font-size:15px}
+  .nivel .tf{flex-shrink:0;width:58px;height:58px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .nivel .tf .t{font-family:'Cinzel',Georgia,serif;font-size:17px;color:var(--gold-l)}
+  .nivel .tf .l{font-size:8px;color:var(--text3);letter-spacing:.05em}
+  .nivel .c .h{font-size:15px;color:var(--text);font-weight:600;margin-bottom:4px}
+  .nivel .c .d{font-size:13px;color:var(--text2)}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  @media(max-width:560px){.twocol{grid-template-columns:1fr}}
+  .good{background:linear-gradient(135deg,rgba(74,222,128,.08),transparent);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:16px 18px}
+  .bad{background:linear-gradient(135deg,rgba(248,113,113,.08),transparent);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:16px 18px}
+  .good .h{color:var(--green);font-weight:700;font-size:14px;margin-bottom:8px}
+  .bad .h{color:var(--red);font-weight:700;font-size:14px;margin-bottom:8px}
+  ul.check{list-style:none}
+  ul.check li{font-size:13px;color:var(--text2);padding:4px 0 4px 22px;position:relative}
+  ul.check li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+  ul.check.x li::before{content:"✕";color:var(--red)}
+
+  .warn{background:linear-gradient(135deg,rgba(251,191,36,.08),transparent);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:15px 18px;margin:14px 0}
+  .warn .h{color:var(--amber);font-weight:600;font-size:13.5px;margin-bottom:5px}
+  .warn p{margin-bottom:0;font-size:13px}
+  .rule{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin:14px 0;text-align:center}
+  .rule .big{font-family:'Cinzel',Georgia,serif;font-size:16px;color:var(--gold-l);margin-bottom:6px}
+
+  .topo{display:block;text-align:center;margin-top:24px;font-size:12px;color:var(--gold-d);text-decoration:none}
+  .topo:hover{color:var(--gold-l)}
+
+  footer{text-align:center;padding:44px 0 64px;border-top:1px solid var(--border)}
+  .disc{font-size:11px;color:var(--text3);max-width:580px;margin:14px auto 0;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap" id="topo">
+
+  <header>
+    <div class="crown">♛</div>
+    <div class="eyebrow">Método SPO · Manual do Trader</div>
+    <h1>Manual SPO</h1>
+    <p class="sub">Tudo o que você precisa pra usar as ferramentas e operar com método. Do primeiro passo à caça de setups — sem enrolação, sem promessa falsa.</p>
+  </header>
+
+  <!-- INDICE -->
+  <nav class="indice">
+    <div class="it">O que você vai aprender</div>
+    <a href="#cap1"><div class="in">🔗</div><div class="tx"><div class="tt">1 · Como tudo funciona junto</div><div class="ds">Bot, indicador e plataforma como uma engrenagem só</div></div><div class="ar">→</div></a>
+    <a href="#cap2"><div class="in">📈</div><div class="tx"><div class="tt">2 · Como usar o indicador</div><div class="ds">Ler o painel e os sinais no gráfico</div></div><div class="ar">→</div></a>
+    <a href="#cap3"><div class="in">🎯</div><div class="tx"><div class="tt">3 · Como caçar ativos</div><div class="ds">Achar setups sozinho: da maré ao gatilho</div></div><div class="ar">→</div></a>
+  </nav>
+
+  <!-- CAP 1 — ECOSSISTEMA -->
+  <section class="bloco" id="cap1">
+    <div class="cap-eyebrow">Capítulo 1</div>
+    <div class="cap-title">Como tudo funciona junto</div>
+    <p>As três ferramentas não competem — se encaixam. O <b>bot</b> acha a oportunidade, o <b>indicador</b> confirma no gráfico, a <b>plataforma</b> garante a disciplina. Uma entrega pra próxima.</p>
+
+    <div class="pecas">
+      <div class="peca"><div class="ico">🤖</div><div class="nome">O Bot</div><div class="papel">Os olhos que nunca dormem. Vigia 24h e avisa quando aparece setup.</div></div>
+      <div class="peca"><div class="ico">📈</div><div class="nome">O Indicador</div><div class="papel">A confirmação visual. Você vê no gráfico o que o bot apontou.</div></div>
+      <div class="peca"><div class="ico">⬡</div><div class="nome">A Plataforma</div><div class="papel">A disciplina. Confere contexto, registra e mostra a evolução.</div></div>
+    </div>
+
+    <h3><span class="n">→</span>O fluxo completo de um trade</h3>
+    <div class="fluxo">
+      <div class="etapa"><div class="dot">🤖</div><div><div class="q">Passo 1 · O bot avisa</div><div class="tt">Chega o alerta no Telegram</div><div class="dd">Par, lado, timeframe, nota de qualidade (⭐) e stop sugerido. Você não precisava estar na tela.</div></div></div>
+      <div class="etapa"><div class="dot">📈</div><div><div class="q">Passo 2 · O indicador confirma</div><div class="tt">Abra o gráfico no TradingView</div><div class="dd">O painel mostra a mesma leitura? AÇÃO, Slow Stoch e Tendência batem com o alerta?</div></div></div>
+      <div class="etapa"><div class="dot">🚦</div><div><div class="q">Passo 3 · A plataforma dá contexto</div><div class="tt">Veja o semáforo Macro e o Setup SPO</div><div class="dd">Dia verde (seguro) ou vermelho (evento perigoso)? Se vermelho, melhor esperar.</div></div></div>
+      <div class="etapa"><div class="dot">🎯</div><div><div class="q">Passo 4 · Você decide</div><div class="tt">Os três concordam? Entre. Com stop.</div><div class="dd">Se algum discorda, espere o próximo. A decisão final é sempre sua.</div></div></div>
+      <div class="etapa"><div class="dot">✦</div><div><div class="q">Passo 5 · A plataforma registra</div><div class="tt">Anote no Diário, acompanhe a Evolução</div><div class="dd">O Diário vira seu espelho. A Curva mostra se a banca cresce. É o que te faz melhorar.</div></div></div>
+    </div>
+
+    <div class="rule"><div class="big">Confirmação tripla antes de entrar.</div><p style="margin-bottom:0">Bot + indicador + plataforma falando a mesma língua = sinal de qualidade. Discordância = espere.</p></div>
+    <a href="#topo" class="topo">↑ voltar ao índice</a>
+  </section>
+
+  <!-- CAP 2 — INDICADOR -->
+  <section class="bloco" id="cap2">
+    <div class="cap-eyebrow">Capítulo 2</div>
+    <div class="cap-title">Como usar o indicador</div>
+    <p>O indicador olha o gráfico por você e junta vários sinais numa tela só. Ele já vem liberado no seu TradingView — é só abrir o gráfico e ler. Pense nele como o painel de um carro: bate o olho e entende a situação.</p>
+
+    <h3><span class="n">1</span>Ler o painel</h3>
+    <div class="card">
+      <div class="row"><div class="k">AÇÃO</div><div class="v"><b class="gold">COMPRA</b>, <b class="gold">VENDA</b> ou <b>AGUARDAR</b>. Em AGUARDAR, fique parado.</div></div>
+      <div class="row"><div class="k">SCORE</div><div class="v">Nota de força (0 a 10). Quanto maior, mais forte.</div></div>
+      <div class="row"><div class="k">TENDÊNCIA</div><div class="v">ALTA, BAIXA ou LATERAL. Opere a favor. Lateral = evite.</div></div>
+      <div class="row"><div class="k">SLOW STOCH</div><div class="v">"Sobrevendido" = caiu muito, pode subir. "Sobrecomprado" = subiu muito, pode cair.</div></div>
+      <div class="row"><div class="k">IMPULSO</div><div class="v">🟢 força de alta · 🔴 força de baixa · 🔵 indeciso.</div></div>
+      <div class="row"><div class="k">ENTRADA/STOP/ALVO</div><div class="v">O painel já calcula onde entrar, o stop e o alvo.</div></div>
+    </div>
+
+    <h3><span class="n">2</span>Quando comprar e quando vender</h3>
+    <div class="twocol">
+      <div class="good"><div class="h">🟢 COMPRA (alta)</div><ul class="check"><li>AÇÃO = COMPRA</li><li>Slow Stoch sobrevendido, virando ↑</li><li>Impulso não-vermelho</li><li>Tendência a favor (ALTA)</li><li>Diamante embaixo da vela</li></ul></div>
+      <div class="bad"><div class="h">🔴 VENDA (baixa)</div><ul class="check x"><li>AÇÃO = VENDA</li><li>Slow Stoch sobrecomprado, virando ↓</li><li>Impulso não-verde</li><li>Tendência a favor (BAIXA)</li><li>Diamante em cima da vela</li></ul></div>
+    </div>
+    <div class="warn"><div class="h">⚠️ Nunca opere sem stop</div><p>O painel mostra o STOP sugerido. Sem ele, um trade ruim zera a conta. Não é opcional.</p></div>
+    <a href="#topo" class="topo">↑ voltar ao índice</a>
+  </section>
+
+  <!-- CAP 3 — CACAR -->
+  <section class="bloco" id="cap3">
+    <div class="cap-eyebrow">Capítulo 3</div>
+    <div class="cap-title">Como caçar ativos</div>
+    <p>Pare de só esperar o alerta. Aprenda a varrer o mercado do jeito SPO: do quadro grande pro detalhe.</p>
+
+    <h3><span class="n">1</span>Onde procurar</h3>
+    <p>Comece pelos ativos com <b>volume e movimento</b> — os grandes (BTC, ETH, SOL...) e moedas com bom volume. Fuja de moedas minúsculas e sem liquidez: se movem de forma errática e te prendem em armadilhas.</p>
+
+    <h3><span class="n">2</span>A varredura: do grande pro pequeno</h3>
+    <div class="funil">
+      <div class="nivel"><div class="tf"><div class="t">4H</div><div class="l">A MARÉ</div></div><div class="c"><div class="h">Qual a tendência maior?</div><div class="d">No 4 horas, veja a direção geral. Preço acima da EMA200 = maré de alta; abaixo = maré de baixa. Essa é a direção que você segue.</div></div></div>
+      <div class="nivel"><div class="tf"><div class="t">1H</div><div class="l">A ONDA</div></div><div class="c"><div class="h">Ache a oportunidade</div><div class="d">No 1 hora, procure a pausa (correção) na direção da maré — onde o Slow Stoch chega ao extremo.</div></div></div>
+      <div class="nivel"><div class="tf"><div class="t">★</div><div class="l">O GATILHO</div></div><div class="c"><div class="h">Confirme a entrada</div><div class="d">No indicador: Slow Stoch virou? Impulso liberou? AÇÃO marcou? Gatilho a favor da maré = setup. Entre com stop.</div></div></div>
+    </div>
+    <div class="warn"><div class="h">⚠️ A maré manda</div><p>Maré de alta, cace só compras. Maré de baixa, cace só vendas. Contra a maré é onde o iniciante se afoga.</p></div>
+
+    <h3><span class="n">3</span>Esse ativo presta?</h3>
+    <div class="twocol">
+      <div class="good"><div class="h">✓ Bom pra surfar</div><ul class="check"><li>Tendência clara</li><li>Velas com volume</li><li>Respeita os movimentos</li><li>Deu pausa e está retomando</li></ul></div>
+      <div class="bad"><div class="h">✕ Deixe passar</div><ul class="check x"><li>De lado (LATERAL)</li><li>Parado, sem volume</li><li>Pavios pra todo lado</li><li>Já correu muito (esticado)</li></ul></div>
+    </div>
+
+    <div class="rule"><div class="big">Maré → Onda → Gatilho. Nessa ordem.</div><p style="margin-bottom:0">Sempre do grande pro pequeno. Quem inverte entra contra a corrente. Não achar setup também é resultado — significa que você é seletivo.</p></div>
+    <a href="#topo" class="topo">↑ voltar ao índice</a>
+  </section>
+
+  <footer>
+    <div class="crown" style="font-size:24px">♛</div>
+    <div class="serif gold" style="font-size:15px">Setup SPO · Sucesso · Poder · Opulência</div>
+    <p class="disc">Material educacional. Não é recomendação de investimento. As ferramentas SPO são de apoio à decisão e não garantem resultado. Trading envolve risco real de perda de capital — estude e opere por sua conta e risco.</p>
+  </footer>
+
+</div>
+</body>
+</html>
