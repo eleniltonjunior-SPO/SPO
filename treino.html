@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SPO Treino · Leitura Gráfica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070A0F; --glass:rgba(255,255,255,.045); --stroke:rgba(255,255,255,.10);
+  --txt:#E8EDF5; --dim:#7C8798; --gold:#E5B93C;
+  --verde:#39FF14; --magenta:#FF0090; --ciano:#00D4FF;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{
+  background:
+    radial-gradient(60% 40% at 85% 0%, rgba(0,212,255,.07), transparent 60%),
+    radial-gradient(50% 40% at 10% 100%, rgba(255,0,144,.06), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+body{background:transparent;color:var(--txt);font-family:'Poppins',system-ui,sans-serif;
+  display:flex;flex-direction:column;max-width:560px;margin:0 auto;
+  padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));overflow-x:hidden}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px 8px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:30px;height:30px;flex:none;border-radius:9px;
+  background:linear-gradient(150deg,var(--gold),#8a6b12);display:grid;place-items:center;
+  font-weight:700;font-size:12px;color:#0A0D12;box-shadow:0 0 22px rgba(229,185,60,.28)}
+.brand h1{font-size:13px;font-weight:600;line-height:1.15}
+.brand span{display:block;font-size:10px;color:var(--dim);font-weight:400;letter-spacing:.08em;text-transform:uppercase}
+.streak{display:flex;align-items:center;gap:6px;flex:none;padding:6px 10px;border-radius:999px;
+  background:var(--glass);border:1px solid var(--stroke);font-size:11px;color:var(--dim)}
+.streak b{color:var(--gold);font-size:13px}
+
+.tabs{display:flex;gap:6px;padding:6px 16px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;font-family:inherit;font-size:11.5px;font-weight:500;color:var(--dim);
+  background:var(--glass);border:1px solid var(--stroke);border-radius:999px;
+  padding:8px 13px;cursor:pointer;white-space:nowrap;transition:.18s}
+.tabs button[aria-selected="true"]{color:var(--gold);border-color:rgba(229,185,60,.45);background:rgba(229,185,60,.09)}
+
+.statebar{margin:10px 16px 0;padding:9px 12px;border:1px solid var(--stroke);border-radius:13px;
+  background:var(--glass);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11.5px}
+.statebar .task{color:var(--dim);line-height:1.4}
+.statebar .task b{color:var(--txt);font-weight:600}
+.statebar .tf{flex:none;color:var(--gold);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+
+.chartwrap{position:relative;margin:9px 16px 0;border:1px solid var(--stroke);border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+  overflow:hidden;flex:none;height:clamp(280px,44vh,430px);touch-action:none}
+canvas{display:block;width:100%;height:100%;cursor:crosshair}
+.badge{position:absolute;right:11px;top:11px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--gold);border:1px solid rgba(229,185,60,.3);padding:4px 8px;border-radius:999px;
+  background:rgba(229,185,60,.06);pointer-events:none}
+.hint{position:absolute;left:11px;top:11px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim);pointer-events:none;transition:opacity .35s}
+
+.linebar{display:none;gap:6px;padding:9px 16px 0;align-items:center}
+.linebar.on{display:flex}
+.linebar .val{flex:1;font-size:13px;font-weight:600;color:var(--gold);text-align:center}
+.linebar button{flex:0 0 46px;padding:11px 0;font-size:15px}
+.linebar .del{flex:0 0 auto;padding:11px 12px;font-size:11px;color:var(--magenta);border-color:rgba(255,0,144,.3)}
+
+.actions{display:flex;gap:8px;padding:10px 16px 0;flex-wrap:wrap}
+button{font-family:inherit;font-size:13px;font-weight:600;border-radius:12px;padding:13px 14px;
+  cursor:pointer;border:1px solid var(--stroke);background:var(--glass);color:var(--txt);
+  flex:1;transition:transform .12s,border-color .2s,background .2s}
+button:active{transform:scale(.975)}
+button:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+button:disabled{opacity:.3;cursor:not-allowed}
+.primary{background:linear-gradient(140deg,rgba(57,255,20,.16),rgba(57,255,20,.04));
+  border-color:rgba(57,255,20,.4);color:var(--verde)}
+.ghost{flex:0 0 auto;color:var(--dim);font-weight:500}
+.buy{color:var(--verde);border-color:rgba(57,255,20,.32)}
+.sell{color:var(--magenta);border-color:rgba(255,0,144,.32)}
+.out{color:var(--dim)}
+
+.result{display:none;margin:11px 16px 0;padding:0;border-radius:16px;border:1px solid transparent}
+.result.open{display:block;padding:16px;border-color:var(--stroke);background:var(--glass);
+  animation:rise .3s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.scoreline{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;flex-wrap:wrap}
+.scoreline .n{font-size:40px;font-weight:700;line-height:1;letter-spacing:-.03em}
+.scoreline .u{font-size:12.5px;color:var(--dim)}
+.verdict{font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.55}
+.verdict b{color:var(--txt);font-weight:600}
+.rule{margin-top:10px;padding:10px 12px;border-left:2px solid var(--gold);
+  background:rgba(229,185,60,.05);border-radius:0 10px 10px 0;font-size:11.5px;line-height:1.55;color:#C9CFDA}
+.rule b{color:var(--gold);display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:4px}
+.lvl{display:grid;grid-template-columns:auto 1fr auto;gap:3px 10px;align-items:center;
+  padding:9px 0;border-top:1px solid rgba(255,255,255,.06)}
+.dot{width:8px;height:8px;border-radius:50%}
+.lvl .p{font-size:12.5px;font-weight:500}
+.lvl .p small{color:var(--dim);font-size:10.5px;font-weight:400}
+.lvl .r{font-size:11.5px;text-align:right}
+.lvl .note{grid-column:2/4;font-size:10.5px;color:var(--dim);line-height:1.45}
+
+/* plano de trade */
+.plan{margin-top:12px;border:1px solid var(--stroke);border-radius:12px;overflow:hidden}
+.plan .ph{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;
+  background:rgba(255,255,255,.03);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.plan .ph b{font-size:14px;letter-spacing:0;text-transform:none}
+.plan .pr{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:baseline;
+  padding:8px 12px;border-top:1px solid rgba(255,255,255,.05);font-size:11.5px}
+.plan .pr span:first-child{color:var(--dim);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.plan .pr em{font-style:normal;color:var(--dim);font-size:10.5px;line-height:1.4}
+
+.session{margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim)}
+.session b{color:var(--txt);font-weight:600}
+
+/* diagnóstico */
+.diag{margin:11px 16px 0;padding:16px;border:1px solid var(--stroke);border-radius:16px;background:var(--glass)}
+.diag h3{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:0 0 12px}
+.diag h3.sp{margin-top:22px}
+.brow{display:grid;grid-template-columns:96px 1fr 38px;gap:9px;align-items:center;margin-bottom:9px;font-size:11.5px}
+.bar{height:7px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.brow .v{text-align:right;font-size:11.5px}
+.err{display:grid;grid-template-columns:22px 1fr auto;gap:10px;padding:10px 0;
+  border-top:1px solid rgba(255,255,255,.06);align-items:start}
+.err .k{font-size:15px;font-weight:700;color:var(--magenta);line-height:1.1}
+.err .t{font-size:12px;font-weight:600}
+.err .d{grid-column:2/4;font-size:10.5px;color:var(--dim);line-height:1.45;margin-top:2px}
+.err .c{font-size:11px;color:var(--dim)}
+.empty{font-size:11.5px;color:var(--dim);line-height:1.5}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">SPO</div>
+    <h1 id="modeTitle">Suporte e Resistência<span id="modeSub">método SPO · treino</span></h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <a href="./" style="text-decoration:none;flex:none;padding:6px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--stroke);font-size:11px;color:var(--dim)">&#8592; plataforma</a>
+    <div class="streak">sequência <b id="streak">0</b></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-m="sr" aria-selected="true">Suporte / Resistência</button>
+  <button data-m="candle" aria-selected="false">Leitura de Candles</button>
+  <button data-m="break" aria-selected="false">Rompimento</button>
+  <button data-m="stop" aria-selected="false">Stop</button>
+  <button data-m="diag" aria-selected="false">Diagnóstico</button>
+</nav>
+
+<div id="trainer">
+  <div class="statebar">
+    <div class="task" id="task"></div>
+    <div class="tf" id="tf">Diário</div>
+  </div>
+
+  <div class="chartwrap">
+    <canvas id="cv"></canvas>
+    <div class="hint" id="hint"></div>
+    <div class="badge" id="badge">rodada 1</div>
+  </div>
+
+  <div class="linebar" id="linebar">
+    <button id="dn">−</button>
+    <div class="val mono" id="lineval">—</div>
+    <button id="up">+</button>
+    <button class="del" id="del">remover</button>
+  </div>
+
+  <div class="actions" id="actions"></div>
+  <div class="result" id="result"></div>
+</div>
+
+<div id="diagview" style="display:none"></div>
+
+<script>
+/* ══════════ util ══════════ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const store={
+  async get(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):null}catch(e){return null}},
+  async set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+/* ══════════ construtor de séries ══════════ */
+function B(seed,base,vol){
+  let a=seed|0;
+  const rnd=()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  return {R:rnd,arr:[],price:base,vol,base};
+}
+function bar(b,c,wu=.45,wd=.45){
+  const o=b.price,h=Math.max(o,c)+b.R()*b.vol*wu,l=Math.min(o,c)-b.R()*b.vol*wd;
+  b.arr.push({o,h,l,c});b.price=c;return b.arr[b.arr.length-1];
+}
+function drift(b,to,n,noise=.55){
+  const from=b.price;
+  for(let i=1;i<=n;i++){const t=i/n,e=t*t*(3-2*t);bar(b,from+(to-from)*e+(b.R()-.5)*b.vol*noise)}
+}
+function rng(b,mid,n,amp){for(let i=0;i<n;i++)bar(b,mid+(b.R()-.5)*amp*2)}
+function touch(b,lvl,up,n=5){
+  drift(b,lvl+(up?-1:1)*b.vol*.35,n,.4);
+  const k=b.arr[b.arr.length-1],over=b.vol*(.15+b.R()*.45);
+  if(up)k.h=Math.max(k.h,lvl+over);else k.l=Math.min(k.l,lvl-over);
+  return k;
+}
+function parab(b,n,dir){let inc=b.vol*.35;for(let i=0;i<n;i++){inc*=1.19;bar(b,b.price+dir*inc,.2,.2)}}
+function stairs(b,n,dir,step){for(let i=0;i<n;i++){drift(b,b.price+dir*step,3,.3);drift(b,b.price-dir*step*.35,2,.3)}}
+function impulse(b,n,dir,size=1){
+  for(let i=0;i<n;i++){const o=b.price,c=o+dir*b.vol*size*(.9+b.R()*.5);
+    b.arr.push({o,h:Math.max(o,c)+b.R()*b.vol*.15,l:Math.min(o,c)-b.R()*b.vol*.15,c});b.price=c}
+}
+function ema(arr,p){const k=2/(p+1);let e=arr[0].c;return arr.map(c=>e=c.c*k+e*(1-k))}
+function pattern(b,type,dir){
+  const o=b.price,v=b.vol;let k;
+  switch(type){
+    case 'martelo':     k={o,c:o+v*.35,h:o+v*.5,l:o-v*2.3};break;
+    case 'martelo_inv': k={o,c:o+v*.35,h:o+v*2.3,l:o-v*.25};break;
+    case 'estrela':     k={o,c:o-v*.35,h:o+v*2.3,l:o-v*.5};break;
+    case 'doji':        k={o,c:o+v*.05,h:o+v*1.3,l:o-v*1.3};break;
+    case 'marubozu':    k={o,c:o+dir*v*2.6,h:o+(dir>0?v*2.75:v*.1),l:o-(dir>0?v*.1:v*2.75)};break;
+    case 'engolfo':{
+      const p=b.arr[b.arr.length-1];
+      p.c=p.o-dir*v*.5;p.h=Math.max(p.o,p.c)+v*.2;p.l=Math.min(p.o,p.c)-v*.2;b.price=p.c;
+      const o2=p.c-dir*v*.25,c2=o2+dir*v*2.2;
+      k={o:o2,c:c2,h:Math.max(o2,c2)+v*.2,l:Math.min(o2,c2)-v*.2};break;
+    }
+  }
+  b.arr.push(k);b.price=k.c;return b.arr.length-1;
+}
+
+/* ══════════ avaliação de trade (parcial + break-even) ══════════ */
+function evalTrade(p,fut){
+  if(!p)return null;
+  const dir=p.side==='buy'?1:-1;
+  let stop=p.stop,partial=false,r=0,at=-1,end='aberto';
+  for(let i=0;i<fut.length;i++){
+    const k=fut[i];
+    const hs=dir>0?k.l<=stop:k.h>=stop;
+    const h1=dir>0?k.h>=p.t1:k.l<=p.t1;
+    const h2=dir>0?k.h>=p.t2:k.l<=p.t2;
+    if(hs){r=partial?.75:-1;at=i;end=partial?'saiu no break-even com parcial':'stopado';break}
+    if(!partial&&h1){partial=true;stop=p.entry;r=.75;end='parcial no alvo 1'}
+    if(partial&&h2){r=2.25;at=i;end='alvo 2 atingido';break}
+  }
+  if(at<0&&partial)end='parcial feita, resto correndo';
+  return {r:+r.toFixed(2),at,end,partial};
+}
+
+/* ══════════ chart ══════════ */
+const cv=$('cv'),ctx=cv.getContext('2d');
+let W=0,H=0,lo=0,hi=1,tlo=0,thi=1;
+const pad={t:16,b:16,l:8,r:60};
+const C={candles:[],future:[],shown:0,lines:[],sel:null,levels:[],reveal:0,revealed:false,
+  mark:null,emaLine:null,zones:[],plan:null,anim:0,maxLines:6};
+
+const shownArr=()=>C.candles.concat(C.future.slice(0,C.shown));
+const y2p=y=>hi-((y-pad.t)/(H-pad.t-pad.b))*(hi-lo);
+const p2y=p=>pad.t+((hi-p)/(hi-lo))*(H-pad.t-pad.b);
+
+function targetFit(){
+  const a=shownArr();if(!a.length)return;
+  const mx=Math.max(...a.map(c=>c.h)),mn=Math.min(...a.map(c=>c.l)),d=(mx-mn)*.07;
+  thi=mx+d;tlo=mn-d;
+}
+function fit(){targetFit();hi=thi;lo=tlo}
+function resize(){
+  const r=cv.parentElement.getBoundingClientRect();
+  if(r.width<10||r.height<10)return;
+  const d=window.devicePixelRatio||1,w=Math.round(r.width*d),h=Math.round(r.height*d);
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
+  W=r.width;H=r.height;ctx.setTransform(d,0,0,d,0,0);draw();
+}
+function hline(p,color,dash,label){
+  const y=Math.round(p2y(p))+.5;
+  ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.setLineDash(dash||[]);
+  ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.setLineDash([]);
+  if(label){ctx.fillStyle=color;ctx.font="700 9px 'JetBrains Mono',monospace";ctx.textAlign='left';
+    ctx.fillText(label,pad.l+4,y-6)}
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const all=shownArr();if(!all.length)return;
+  const total=C.candles.length+C.future.length;
+  const cw=(W-pad.l-pad.r)/total;
+
+  ctx.strokeStyle='rgba(255,255,255,.045)';ctx.lineWidth=1;
+  ctx.font="10px 'JetBrains Mono',monospace";ctx.textBaseline='middle';ctx.textAlign='left';
+  for(let i=0;i<=4;i++){
+    const p=lo+(hi-lo)*i/4,y=Math.round(p2y(p))+.5;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='rgba(124,135,152,.7)';ctx.fillText(p.toFixed(2),W-pad.r+7,y);
+  }
+
+  C.zones.forEach(z=>{
+    const y1=p2y(z.a),y2=p2y(z.b);
+    ctx.fillStyle=z.fill;ctx.fillRect(pad.l,Math.min(y1,y2),W-pad.l-pad.r,Math.abs(y2-y1));
+  });
+
+  if(C.emaLine){
+    ctx.strokeStyle='rgba(229,185,60,.5)';ctx.lineWidth=1.4;ctx.beginPath();
+    C.emaLine.slice(0,all.length).forEach((v,i)=>{const x=pad.l+i*cw+cw/2;i?ctx.lineTo(x,p2y(v)):ctx.moveTo(x,p2y(v))});
+    ctx.stroke();
+  }
+
+  /* separador entre o que foi decidido e o desfecho */
+  if(C.shown>0){
+    const x=Math.round(pad.l+C.candles.length*cw)+.5;
+    ctx.strokeStyle='rgba(229,185,60,.35)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,H-pad.b);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(229,185,60,.6)';ctx.font="9px 'JetBrains Mono',monospace";ctx.textAlign='left';
+    ctx.fillText('DECISÃO',x+4,pad.t+7);
+  }
+
+  if(C.plan){
+    hline(C.plan.entry,'rgba(229,185,60,.9)',[],'ENTRADA '+C.plan.entry.toFixed(2));
+    hline(C.plan.stop,'rgba(255,0,144,.85)',[5,4],'STOP '+C.plan.stop.toFixed(2));
+    hline(C.plan.t1,'rgba(57,255,20,.55)',[5,4],'ALVO 1');
+    hline(C.plan.t2,'rgba(57,255,20,.85)',[5,4],'ALVO 2');
+  }
+
+  all.forEach((k,i)=>{
+    const x=pad.l+i*cw+cw/2,up=k.c>=k.o,fut=i>=C.candles.length;
+    ctx.globalAlpha=fut?.95:1;
+    ctx.strokeStyle=up?'rgba(57,255,20,.6)':'rgba(255,0,144,.6)';
+    ctx.lineWidth=cw>3?1.3:1;
+    ctx.beginPath();ctx.moveTo(Math.round(x)+.5,p2y(k.h));ctx.lineTo(Math.round(x)+.5,p2y(k.l));ctx.stroke();
+    const bw=Math.max(1.1,cw*.62),yo=p2y(k.o),yc=p2y(k.c);
+    ctx.fillStyle=up?'#39FF14':'#FF0090';
+    ctx.fillRect(x-bw/2,Math.min(yo,yc),bw,Math.max(1,Math.abs(yc-yo)));
+    ctx.globalAlpha=1;
+    if(C.mark===i){
+      ctx.strokeStyle='rgba(229,185,60,.85)';ctx.lineWidth=1.2;
+      ctx.strokeRect(x-Math.max(5,bw*1.5),p2y(k.h)-5,Math.max(10,bw*3),p2y(k.l)-p2y(k.h)+10);
+    }
+  });
+
+  C.lines.forEach((p,i)=>{
+    const y=Math.round(p2y(p))+.5,on=C.sel===i;
+    ctx.strokeStyle=on?'rgba(229,185,60,1)':'rgba(229,185,60,.7)';
+    ctx.lineWidth=on?2:1.4;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=on?'rgba(229,185,60,.28)':'rgba(229,185,60,.13)';
+    ctx.fillRect(W-pad.r,y-8,pad.r,16);
+    ctx.fillStyle='#E5B93C';ctx.font="10px 'JetBrains Mono',monospace";ctx.textAlign='left';
+    ctx.fillText(p.toFixed(2),W-pad.r+7,y);
+    if(on){ctx.beginPath();ctx.arc(pad.l+9,y,4,0,6.284);ctx.fillStyle='#E5B93C';ctx.fill()}
+  });
+
+  if(C.revealed){
+    const sweep=pad.l+(W-pad.l-pad.r)*C.reveal;
+    C.levels.forEach(L=>{
+      const col=L.dir==='res'?'255,0,144':'0,212,255',y=p2y(L.price);
+      const h=Math.abs(p2y(L.price-L.zone*.5)-p2y(L.price+L.zone*.5));
+      ctx.fillStyle=`rgba(${col},.13)`;ctx.fillRect(pad.l,y-h/2,sweep-pad.l,h);
+      ctx.strokeStyle=`rgba(${col},.9)`;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(pad.l,Math.round(y)+.5);ctx.lineTo(sweep,Math.round(y)+.5);ctx.stroke();
+      (L.idx||[]).forEach(i=>{const x=pad.l+i*cw+cw/2;if(x>sweep)return;
+        ctx.beginPath();ctx.arc(x,y,3,0,6.284);ctx.fillStyle=`rgba(${col},1)`;ctx.fill()});
+      if(C.reveal>=1){ctx.fillStyle=`rgba(${col},1)`;ctx.font="700 10px 'JetBrains Mono',monospace";
+        ctx.textAlign='left';ctx.fillText(L.price.toFixed(2),W-pad.r+7,y)}
+    });
+  }
+}
+function sweep(){
+  const t0=performance.now();cancelAnimationFrame(C.anim);
+  (function s(n){C.reveal=Math.min(1,(n-t0)/650);draw();if(C.reveal<1)C.anim=requestAnimationFrame(s)})(t0);
+}
+/* replay do desfecho, candle a candle */
+function playFuture(done){
+  if(!C.future.length){done&&done();return}
+  let last=0;
+  cancelAnimationFrame(C.anim);
+  (function step(n){
+    if(n-last>46&&C.shown<C.future.length){C.shown++;last=n;targetFit()}
+    lo+=(tlo-lo)*.18;hi+=(thi-hi)*.18;
+    draw();
+    if(C.shown<C.future.length||Math.abs(thi-hi)>1e-3)C.anim=requestAnimationFrame(step);
+    else{lo=tlo;hi=thi;draw();done&&done()}
+  })(performance.now());
+}
+
+/* ── linhas ── */
+let dragging=false;
+cv.addEventListener('pointerdown',e=>{
+  if(!M.lines||C.locked)return;
+  cv.setPointerCapture(e.pointerId);
+  const r=cv.getBoundingClientRect(),y=e.clientY-r.top;
+  let hit=-1,best=14;
+  C.lines.forEach((p,i)=>{const d=Math.abs(p2y(p)-y);if(d<best){best=d;hit=i}});
+  if(hit>=0){C.sel=hit;dragging=true}
+  else if(C.lines.length<C.maxLines){C.lines.push(y2p(y));C.sel=C.lines.length-1;dragging=true}
+  $('hint').style.opacity=0;syncLine();draw();
+});
+cv.addEventListener('pointermove',e=>{
+  if(!dragging||C.sel===null)return;
+  const r=cv.getBoundingClientRect();
+  C.lines[C.sel]=y2p(clamp(e.clientY-r.top,pad.t,H-pad.b));syncLine();draw();
+});
+['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>dragging=false));
+function syncLine(){
+  const on=M.lines&&C.sel!==null&&!C.locked;
+  $('linebar').className='linebar'+(on?' on':'');
+  if(on)$('lineval').textContent=C.lines[C.sel].toFixed(2);
+}
+$('up').onclick=()=>nudge(1);$('dn').onclick=()=>nudge(-1);
+function nudge(d){if(C.sel===null)return;C.lines[C.sel]+=d*(hi-lo)*.0025;syncLine();draw()}
+$('del').onclick=()=>{if(C.sel===null)return;C.lines.splice(C.sel,1);C.sel=null;syncLine();draw()};
+
+/* ══════════ estatística e diagnóstico ══════════ */
+const ERR={
+  pavio:{t:'Ancorar o nível no pavio',aba:'Suporte / Resistência',
+    d:'Você marca o extremo do pavio em vez do ponto onde os corpos pararam. Pavio é liquidez, não estrutura — o nível operável é o corpo.'},
+  falso_nivel:{t:'Marcar nível sem toques suficientes',aba:'Suporte / Resistência',
+    d:'Linha em região com menos de 3 toques. No diário, dois toques ainda é coincidência.'},
+  nivel_perdido:{t:'Deixar nível forte de fora',aba:'Suporte / Resistência',
+    d:'Você para de varrer o gráfico cedo demais e ignora níveis com muitos toques.'},
+  contexto:{t:'Operar padrão fora da estrutura',aba:'Leitura de Candles',
+    d:'O padrão estava correto, o local não. Candle no meio do range é volatilidade, não sinal — sem nível não há stop nem alvo.'},
+  pullback:{t:'Confundir pullback com reversão',aba:'Leitura de Candles',
+    d:'Vela pequena contra a tendência é retração. Reversão exige rejeição forte na estrutura, com vela maior que a média.'},
+  forca:{t:'Não reconhecer candle de força',aba:'Leitura de Candles',
+    d:'Corpo cheio, quase sem pavio, rompendo nível: quem entrou não devolveu nada até o fechamento. Isso é continuação, não topo.'},
+  contra_mare:{t:'Operar contra a maré',aba:'Rompimento',
+    d:'Entrar contra uma sequência de topos e fundos ascendentes (ou descendentes). Só se opera contra depois da quebra de estrutura, nunca antes.'},
+  parabolico:{t:'Seguir movimento parabólico',aba:'Rompimento',
+    d:'Sem consolidação não existe base para o stop. Parabólico devolve na mesma velocidade em que subiu.'},
+  falso_rompimento:{t:'Entrar em falso rompimento',aba:'Rompimento',
+    d:'Preço furou o nível e voltou para dentro sem acumulação antes. Isso é caça de liquidez.'},
+  sem_acumulacao:{t:'Romper sem acumulação',aba:'Rompimento',
+    d:'Chegou no nível e tentou romper de primeira. Sem base o mercado não sustenta o preço do outro lado.'},
+  perdeu_setup:{t:'Ficar de fora de setup válido',aba:'Rompimento',
+    d:'Excesso de cautela: a estrutura tinha acumulação e base para stop, e você recusou. Recusar tudo também é um erro de leitura.'},
+  stop_ruido:{t:'Stop dentro do desenvolvimento',aba:'Stop',
+    d:'Stop colocado no meio da zona onde o mercado ainda respira. É caçado pelo ruído antes de a estrutura falhar.'},
+  stop_extremo:{t:'Stop colado na máxima/mínima',aba:'Stop',
+    d:'Todo mundo põe no extremo exato — é justamente ali que a liquidez é buscada. Precisa de folga além do extremo.'},
+  stop_largo:{t:'Stop largo demais',aba:'Stop',
+    d:'A estrutura já estava invalidada bem antes. Risco inflado sem proteção extra, o R do trade desaba.'}
+};
+let ST={rounds:{},sum:{},err:{},rs:[]};
+function logErr(k){if(!k)return;ST.err[k]=(ST.err[k]||0)+1}
+function saveST(){store.set('spo_v3',{ST,streak})}
+
+/* ══════════ estado ══════════ */
+let M={},mode='sr',round=0,streak=0;
+
+function setActions(list){
+  const el=$('actions');el.innerHTML='';
+  list.forEach(b=>{const x=document.createElement('button');x.textContent=b.t;x.className=b.c||'';x.onclick=b.f;el.appendChild(x)});
+}
+function panel(html){
+  const el=$('result');el.innerHTML=html;el.className='result open';
+  requestAnimationFrame(()=>el.scrollIntoView({behavior:'smooth',block:'end'}));
+}
+function commit(score,errKey,r){
+  ST.rounds[mode]=(ST.rounds[mode]||0)+1;
+  ST.sum[mode]=(ST.sum[mode]||0)+score;
+  if(typeof r==='number')ST.rs.push(r);
+  logErr(errKey);
+  streak=score>=70?streak+1:0;
+  $('streak').textContent=streak;saveST();
+  const n=ST.rounds[mode],avg=Math.round(ST.sum[mode]/n);
+  return `<div class="session"><span>rodadas <b>${n}</b></span>
+    <span>média <b class="mono">${avg}</b></span>
+    ${ST.rs.length?`<span>expectativa <b class="mono">${(ST.rs.reduce((a,b)=>a+b,0)/ST.rs.length).toFixed(2)}R</b></span>`:''}</div>`;
+}
+const head=(score,sub,extra)=>{
+  const c=score>=80?'var(--verde)':score>=55?'var(--gold)':'var(--magenta)';
+  return `<div class="scoreline"><span class="n mono" style="color:${c}">${score}</span>
+    <span class="u">/100 · ${sub}</span>${extra||''}</div>`;
+};
+const ruleBox=(t,txt)=>`<div class="rule"><b>${t}</b>${txt}</div>`;
+function planBox(p,res,label){
+  if(!p)return'';
+  const cor=res.r>0?'var(--verde)':res.r<0?'var(--magenta)':'var(--dim)';
+  return `<div class="plan">
+    <div class="ph"><span>${label||'Plano do trade'}</span><b class="mono" style="color:${cor}">${res.r>0?'+':''}${res.r}R</b></div>
+    <div class="pr"><span>Entrada</span><em>${p.gatilho}</em><b class="mono">${p.entry.toFixed(2)}</b></div>
+    <div class="pr"><span>Stop</span><em>${p.inval}</em><b class="mono">${p.stop.toFixed(2)}</b></div>
+    <div class="pr"><span>Alvo 1</span><em>50% da posição · stop vai para o preço de entrada</em><b class="mono">${p.t1.toFixed(2)}</b></div>
+    <div class="pr"><span>Alvo 2</span><em>${p.saida}</em><b class="mono">${p.t2.toFixed(2)}</b></div>
+    <div class="pr"><span>Desfecho</span><em>${res.end}</em><b class="mono" style="color:${cor}">${res.r>0?'+':''}${res.r}R</b></div>
+  </div>`;
+}
+function mkPlan(side,entry,stop,extra){
+  const risk=Math.abs(entry-stop),d=side==='buy'?1:-1;
+  return Object.assign({side,entry,stop,t1:entry+d*risk*1.5,t2:entry+d*risk*3},extra);
+}
+
+/* ══════════ MÓDULO 1 · SUPORTE E RESISTÊNCIA ══════════ */
+const SR={
+  lines:true,title:'Suporte e Resistência',sub:'diário · zoom out',tf:'Diário',
+  task:'Marque os níveis com <b>mais toques</b>. Toque para criar, arraste para ajustar.',
+  hint:'toque no preço · arraste para ajustar',
+  build(){
+    const b=B(Math.random()*1e9,100,.9),n=4+Math.floor(b.R()*2),lv=[];
+    for(let i=0;i<n;i++)lv.push({price:100*(.84+(i/(n-1))*.32)+(b.R()-.5)*1.1,touches:0,idx:[],extreme:null,dir:null,zone:b.vol});
+    let cur=lv[Math.floor(b.R()*lv.length)];b.price=cur.price;
+    const walk=lim=>{
+      while(b.arr.length<lim){
+        let nx=cur,g=0;while(nx===cur&&g++<20)nx=lv[Math.floor(b.R()*lv.length)];
+        const up=nx.price>b.price;
+        if(b.R()<.22){drift(b,nx.price+(up?1:-1)*b.vol*1.4,7+Math.floor(b.R()*6),.5);cur=nx}
+        else{
+          const k=touch(b,nx.price,up,6+Math.floor(b.R()*9));
+          nx.touches++;nx.idx.push(b.arr.length-1);nx.dir=up?'res':'sup';
+          const w=up?k.h:k.l;
+          nx.extreme=nx.extreme===null?w:(up?Math.max(nx.extreme,w):Math.min(nx.extreme,w));
+          cur=nx;
+        }
+      }
+    };
+    walk(230);
+    const cut=b.arr.length;
+    walk(cut+45);
+    C.candles=b.arr.slice(0,cut);C.future=b.arr.slice(cut);C.shown=0;
+    C.levels=lv.filter(l=>l.touches>=3);
+    C.lines=[];C.sel=null;C.mark=null;C.emaLine=null;C.zones=[];C.maxLines=6;C.plan=null;
+    this.vol=b.vol;this.futTouch=lv;
+    setActions([{t:'Conferir',c:'primary',f:()=>SR.check()},
+                {t:'Limpar',c:'ghost',f:()=>{C.lines=[];C.sel=null;syncLine();draw()}}]);
+  },
+  check(){
+    if(!C.lines.length)return;
+    const tol=this.vol*1.15,used=C.lines.map(()=>false);
+    const wTot=C.levels.reduce((a,l)=>a+l.touches,0);
+    let pts=0;const rows=[];
+    C.levels.slice().sort((a,b)=>b.touches-a.touches).forEach(L=>{
+      let bi=-1,bd=1e9;
+      C.lines.forEach((u,i)=>{if(used[i])return;const d=Math.abs(u-L.price);if(d<bd){bd=d;bi=i}});
+      if(bi>=0&&bd<=tol){used[bi]=true;const acc=1-bd/tol;pts+=L.touches*(.35+.65*acc);
+        rows.push({ok:true,L,err:bd/L.price*100,wick:Math.abs(C.lines[bi]-L.extreme)<bd*.85})}
+      else rows.push({ok:false,L});
+    });
+    const extras=used.filter(u=>!u).length;
+    const score=clamp(Math.round((pts-extras*.14*wTot)/wTot*100),0,100);
+    C.locked=true;C.revealed=true;syncLine();sweep();
+
+    const hits=rows.filter(r=>r.ok).length,wicks=rows.filter(r=>r.ok&&r.wick).length;
+    let v,ek=null;
+    if(wicks){v=`<b>${wicks} nível(is) ancorado(s) no pavio.</b> O nível real está onde os corpos pararam.`;ek='pavio'}
+    else if(extras){v=`<b>${extras} linha(s) sem 3 toques.</b> No diário, dois toques ainda é coincidência.`;ek='falso_nivel'}
+    else if(hits<C.levels.length){v=`Faltou marcar ${C.levels.length-hits}. Varra o gráfico inteiro antes de decidir.`;ek='nivel_perdido'}
+    else v='Leitura limpa. Todos os níveis de toque múltiplo marcados.';
+
+    setTimeout(()=>playFuture(()=>{
+      // conta quantas vezes o futuro respeitou as linhas do usuário
+      let respeitos=0;
+      C.future.forEach(k=>C.lines.forEach(p=>{
+        if(k.l<=p+tol&&k.h>=p-tol&&Math.abs(k.c-p)>tol*.3)respeitos++;
+      }));
+      let h=head(score,`${hits} de ${C.levels.length} níveis`)+`<div class="verdict">${v}</div>`;
+      rows.forEach(r=>{
+        const c=r.L.dir==='res'?'var(--magenta)':'var(--ciano)';
+        const f=r.L.touches>=6?'forte':r.L.touches>=4?'médio':'fraco';
+        h+=`<div class="lvl"><span class="dot" style="background:${c}"></span>
+          <span class="p mono">${r.L.price.toFixed(2)} <small>· ${r.L.dir==='res'?'resistência':'suporte'} · ${r.L.touches} toques · ${f}</small></span>
+          <span class="r mono" style="color:${r.ok?'var(--verde)':'var(--magenta)'}">${r.ok?'−'+r.err.toFixed(2)+'%':'não marcado'}</span>
+          ${r.ok&&r.wick?`<span class="note">linha colada no pavio (${r.L.extreme.toFixed(2)}), não no corpo</span>`:''}</div>`;
+      });
+      if(extras)h+=`<div class="lvl"><span class="dot" style="background:var(--dim)"></span>
+        <span class="p mono">${extras} linha(s) falsa(s)</span><span class="r mono" style="color:var(--magenta)">−${Math.round(extras*14)}</span></div>`;
+      h+=`<div class="lvl"><span class="dot" style="background:var(--gold)"></span>
+        <span class="p mono">45 candles à frente <small>· ${respeitos} interação(ões) do preço com suas linhas</small></span>
+        <span class="r mono" style="color:var(--gold)">desfecho</span>
+        <span class="note">Nível que continua sendo respeitado depois da sua marcação é nível operável. O que o preço atravessa sem reagir era ruído.</span></div>`;
+      h+=ruleBox('Regra SPO','Diário, zoom out de 5 a 10x. Mais toques = nível mais forte. Desenhe o óbvio primeiro, ajuste ao corpo, nunca ao extremo do pavio.');
+      h+=commit(score,ek);
+      panel(h);
+      setActions([{t:'Próximo',c:'primary',f:next}]);
+    }),700);
+  }
+};
+
+/* ══════════ MÓDULO 2 · LEITURA DE CANDLES ══════════ */
+const CANDLE={
+  lines:false,title:'Leitura de Candles',sub:'força, rejeição e exaustão',tf:'4H',
+  task:'O candle marcado é o último. <b>Comprar, vender ou ficar de fora?</b>',
+  hint:'candle marcado em dourado',
+  set:[
+    {p:'martelo',ctx:'sup',ans:'buy',nome:'Martelo',err:null,fut:'up',
+     why:'Pavio inferior longo em suporte testado: foi para baixo e foi rejeitado com força. O corpo pequeno no topo mostra que o vendedor perdeu o controle dentro da própria vela.'},
+    {p:'estrela',ctx:'res',ans:'sell',nome:'Estrela cadente',err:null,fut:'down',
+     why:'Pavio superior longo colado na resistência. Compraram alto e foram engolidos no mesmo candle — rejeição clássica de topo.'},
+    {p:'martelo_inv',ctx:'sup',ans:'buy',nome:'Martelo invertido',err:null,fut:'up',
+     why:'Tentativa de alta absorvida, mas o fechamento acima da abertura em zona defendida indica comprador testando. Vale porque está NA estrutura.'},
+    {p:'doji',ctx:'res',ans:'out',nome:'Doji na resistência',err:'contexto',fut:'chop',
+     why:'Indecisão pura. Ninguém venceu o candle. Operar indecisão é apostar. Espere o candle seguinte definir o lado.'},
+    {p:'marubozu',ctx:'break',ans:'buy',nome:'Marubozu de alta',err:'forca',fut:'up',
+     why:'Corpo cheio, quase sem pavio, rompendo o nível. Força real: quem entrou no candle não devolveu nada até o fechamento.'},
+    {p:'engolfo',ctx:'res',ans:'sell',nome:'Engolfo de baixa',err:null,fut:'down',
+     why:'O candle de baixa cobre todo o corpo anterior na resistência. Quem comprou o candle anterior está no prejuízo — esses stops viram combustível.'},
+    {p:'engolfo',ctx:'sup',ans:'buy',nome:'Engolfo de alta',err:null,fut:'up',
+     why:'Absorção total do candle vendedor no suporte. Mudança de mão visível dentro de uma vela.'},
+    {p:'martelo',ctx:'meio',ans:'out',nome:'Martelo no vazio',err:'contexto',fut:'chop',
+     why:'O padrão está certo, o LOCAL está errado. Preço no meio do range. Sem nível não há stop nem alvo — isso é ruído.'},
+    {p:'estrela',ctx:'meio',ans:'out',nome:'Estrela cadente no vazio',err:'contexto',fut:'up',
+     why:'Mesmo padrão que funciona na resistência, aqui não vale nada. Candle sem estrutura é só volatilidade — e a tendência continuou.'},
+    {p:'doji',ctx:'meio',ans:'out',nome:'Doji de retração',err:'pullback',fut:'up',
+     why:'Vela pequena contra a direção da tendência, no meio do caminho. Isso é pullback, não reversão. Reversão exige rejeição na estrutura.'}
+  ],
+  build(){
+    const c=this.set[Math.floor(Math.random()*this.set.length)];
+    const b=B(Math.random()*1e9,100,1.1);
+    const lvl=c.ctx==='sup'?96:c.ctx==='res'?106:null;
+    if(c.ctx==='sup'){b.price=104;drift(b,101,10,.5);touch(b,96,false,9);drift(b,99,8,.5);touch(b,96,false,10);drift(b,98.5,6,.5);b.price=96.4}
+    else if(c.ctx==='res'){b.price=98;drift(b,102,10,.5);touch(b,106,true,9);drift(b,103,8,.5);touch(b,106,true,10);drift(b,104.5,6,.5);b.price=105.6}
+    else if(c.ctx==='break'){b.price=97;rng(b,98.5,16,1);drift(b,101,6,.4);touch(b,103,true,6);drift(b,101.5,5,.4);b.price=102.6}
+    else{b.price=98;drift(b,101,12,.6);drift(b,99.5,8,.6);drift(b,102,10,.6)}
+    const i=pattern(b,c.p,1),sig=b.arr[i],cut=b.arr.length;
+
+    // plano derivado do próprio candle de sinal
+    const side=c.ans==='sell'?'sell':'buy';
+    const entry=sig.c;
+    const stop=side==='buy'?Math.min(sig.l,(lvl||sig.l))-b.vol*.5:Math.max(sig.h,(lvl||sig.h))+b.vol*.5;
+    const plan=mkPlan(side,entry,stop,{
+      gatilho:'no fechamento do candle de sinal',
+      inval:side==='buy'?'abaixo do pavio da rejeição':'acima do pavio da rejeição',
+      saida:'resto carregado até a próxima estrutura'
+    });
+
+    // desfecho
+    if(c.fut==='up'){drift(b,b.price+b.vol*1.5,4,.4);impulse(b,8,1,1.1);drift(b,b.price-b.vol,4,.5);impulse(b,6,1,.9)}
+    else if(c.fut==='down'){drift(b,b.price-b.vol*1.5,4,.4);impulse(b,8,-1,1.1);drift(b,b.price+b.vol,4,.5);impulse(b,6,-1,.9)}
+    else{rng(b,b.price,22,b.vol*1.3)}
+
+    C.candles=b.arr.slice(0,cut);C.future=b.arr.slice(cut);C.shown=0;C.mark=i;
+    C.lines=[];C.sel=null;C.emaLine=null;C.revealed=false;C.levels=[];C.plan=null;
+    C.zones=lvl?[{a:lvl-.9,b:lvl+.9,fill:c.ctx==='res'?'rgba(255,0,144,.10)':'rgba(0,212,255,.10)'}]:[];
+    this.cur=c;this.plan=plan;
+    setActions([{t:'Comprar',c:'buy',f:()=>CANDLE.ans('buy')},
+                {t:'Vender',c:'sell',f:()=>CANDLE.ans('sell')},
+                {t:'Fora',c:'out',f:()=>CANDLE.ans('out')}]);
+  },
+  ans(a){
+    const c=this.cur,ok=a===c.ans,score=ok?100:0;
+    C.locked=true;C.plan=this.plan;
+    const res=evalTrade(this.plan,C.future);
+    const lbl={buy:'Comprar',sell:'Vender',out:'Ficar de fora'};
+    playFuture(()=>{
+      let h=head(score,ok?'leitura correta':'leitura errada',
+        `<span class="u mono" style="color:${res.r>0?'var(--verde)':'var(--magenta)'}">${res.r>0?'+':''}${res.r}R</span>`);
+      h+=`<div class="verdict">Padrão: <b>${c.nome}</b>. Certo: <b>${lbl[c.ans]}</b>${ok?'':` · você marcou ${lbl[a]}`}.<br>${c.why}</div>`;
+      h+=planBox(this.plan,res,c.ans==='out'?'Se tivesse operado assim mesmo':'Plano do trade');
+      h+=ruleBox('Entrada e saída','Entra no fechamento do candle de sinal, não no meio dele. Stop além do pavio da rejeição. Sai 50% em 1,5R e leva o stop para o preço de entrada — daí em diante o trade não pode mais dar prejuízo. O resto corre até a próxima estrutura.');
+      h+=commit(score,ok?null:c.err||'contexto',c.ans==='out'?null:res.r);
+      panel(h);
+      setActions([{t:'Próximo',c:'primary',f:next}]);
+    });
+  }
+};
+
+/* ══════════ MÓDULO 3 · ROMPIMENTO ══════════ */
+const BREAK={
+  lines:false,title:'Rompimento',sub:'acumulação vs parabólico',tf:'4H',
+  task:'Estrutura chegando no nível. <b>Comprar, vender ou ficar de fora?</b>',hint:'',
+  build(){
+    const list=['tri_asc','tri_desc','parab','fake','stairs','accum_ma','noaccum'];
+    const id=list[Math.floor(Math.random()*list.length)];
+    const b=B(Math.random()*1e9,100,1);
+    let lvl=null,dir='res',ans='out',side='buy',stop=0,nome='',why='',err=null,fut='';
+    switch(id){
+      case 'tri_asc':
+        lvl=105;b.price=97;
+        for(let i=0;i<4;i++){drift(b,99+i*1.5,4,.4);touch(b,lvl,true,4)}
+        drift(b,103.8,3,.3);
+        ans='buy';side='buy';stop=103.1;nome='Triângulo ascendente';err='perdeu_setup';fut='up';
+        why='Mínimas cada vez mais altas comprimindo contra uma resistência plana. O comprador aceita pagar mais caro a cada teste. E essa sequência de fundos deixa base real para o stop.';
+        break;
+      case 'tri_desc':
+        lvl=95;dir='sup';b.price=103;
+        for(let i=0;i<4;i++){drift(b,101-i*1.5,4,.4);touch(b,lvl,false,4)}
+        drift(b,96.2,3,.3);
+        ans='sell';side='sell';stop=96.9;nome='Triângulo descendente';err='perdeu_setup';fut='down';
+        why='Máximas cada vez mais baixas empurrando um suporte plano. Rompimento de baixa com base de referência acima para o stop.';
+        break;
+      case 'parab':
+        b.price=96;rng(b,96.5,10,.7);parab(b,22,1);
+        ans='out';side='buy';stop=b.price-b.vol*2.5;nome='Movimento parabólico';err='parabolico';fut='crash';
+        why='Subida acelerada sem consolidação. Não existe base de suporte, logo não existe onde colocar stop. Parabólico devolve na mesma velocidade em que subiu.';
+        break;
+      case 'fake':
+        lvl=104;b.price=97;drift(b,100,10,.6);impulse(b,5,1,1.1);
+        {const k=b.arr[b.arr.length-1];k.h=lvl+1.4;k.c=lvl-.4;b.price=k.c}
+        drift(b,101,5,.5);
+        ans='out';side='buy';stop=99.6;nome='Falso rompimento';err='falso_rompimento';fut='down';
+        why='O preço furou o nível e voltou para dentro no mesmo movimento, sem acumulação antes. Rompimento sem base é caça de liquidez: pega quem entrou no pavio.';
+        break;
+      case 'stairs':
+        b.price=93;stairs(b,7,1,2.2);lvl=b.price+1.5;
+        ans='out';side='sell';stop=b.price+b.vol*2;nome='Contra-maré em escada';err='contra_mare';fut='up';
+        why='Topos e fundos subindo em degraus. Shortar aqui é operar contra a maré e entregar liquidez a quem está a favor. Só se opera contra depois da quebra de estrutura.';
+        break;
+      case 'accum_ma':
+        lvl=105;b.price=96;drift(b,102,10,.6);touch(b,lvl,true,5);
+        for(let i=0;i<5;i++){drift(b,102.6+i*.45,3,.35);drift(b,104.2+i*.15,3,.35)}
+        ans='buy';side='buy';stop=102.3;nome='Acumulação apoiada na média';err='perdeu_setup';fut='up';
+        why='Depois de chegar no nível-chave o preço consolidou e a média subiu por baixo, virando suporte dinâmico. Consolidação sustentada é mercado com fôlego para romper e segurar.';
+        break;
+      case 'noaccum':
+        lvl=105;b.price=95;impulse(b,14,1,.95);b.arr[b.arr.length-1].h=lvl-.2;
+        ans='out';side='buy';stop=b.price-b.vol*2.2;nome='Rompimento sem acumulação';err='sem_acumulacao';fut='down';
+        why='Chegou no nível e tentou romper de primeira, sem consolidar. Sem acumulação o mercado não tem base para sustentar o preço acima.';
+        break;
+    }
+    const cut=b.arr.length,entry=b.price;
+    const plan=mkPlan(side,entry,stop,{
+      gatilho:ans==='out'?'no rompimento do nível (entrada que você evitaria)':'no fechamento acima do nível, não no pavio',
+      inval:'abaixo do último fundo mais alto da acumulação',
+      saida:'próxima estrutura relevante · stop carregado por fundo'
+    });
+    // desfecho
+    if(fut==='up'){impulse(b,7,1,1.2);drift(b,b.price-b.vol*1.5,4,.5);impulse(b,9,1,1)}
+    else if(fut==='down'){impulse(b,7,-1,1.2);drift(b,b.price+b.vol*1.2,4,.5);impulse(b,9,-1,1)}
+    else if(fut==='crash'){impulse(b,12,-1,1.9);drift(b,b.price+b.vol,5,.5);impulse(b,5,-1,1.2)}
+
+    C.candles=b.arr.slice(0,cut);C.future=b.arr.slice(cut);C.shown=0;
+    C.mark=null;C.lines=[];C.sel=null;C.revealed=false;C.levels=[];C.plan=null;
+    C.emaLine=(id==='accum_ma')?ema(b.arr,21):null;
+    C.zones=lvl?[{a:lvl-.9,b:lvl+.9,fill:dir==='res'?'rgba(255,0,144,.11)':'rgba(0,212,255,.11)'}]:[];
+    this.cur={id,ans,nome,why,err};this.plan=plan;
+    $('task').innerHTML=id==='stairs'?'Preço em escada de alta chegando no topo. <b>Vale shortar?</b>':this.task;
+    setActions([{t:'Comprar',c:'buy',f:()=>BREAK.ans('buy')},
+                {t:'Vender',c:'sell',f:()=>BREAK.ans('sell')},
+                {t:'Fora',c:'out',f:()=>BREAK.ans('out')}]);
+  },
+  ans(a){
+    const s=this.cur,ok=a===s.ans,score=ok?100:0;
+    C.locked=true;C.plan=this.plan;
+    const res=evalTrade(this.plan,C.future);
+    const lbl={buy:'Comprar',sell:'Vender',out:'Ficar de fora'};
+    playFuture(()=>{
+      let h=head(score,ok?'decisão correta':'decisão errada',
+        `<span class="u mono" style="color:${res.r>0?'var(--verde)':'var(--magenta)'}">${res.r>0?'+':''}${res.r}R</span>`);
+      h+=`<div class="verdict">Cenário: <b>${s.nome}</b>. Certo: <b>${lbl[s.ans]}</b>${ok?'':` · você marcou ${lbl[a]}`}.<br>${s.why}</div>`;
+      h+=planBox(this.plan,res,s.ans==='out'?'O que teria acontecido se você entrasse':'Plano do trade');
+      h+=ruleBox('Entrada e saída','Entrada só no fechamento além do nível, nunca no pavio do rompimento. Stop abaixo do último fundo mais alto da acumulação. Parcial de 50% em 1,5R com stop indo para o preço de entrada, e o restante carregado fundo a fundo enquanto a estrutura se mantiver.');
+      h+=commit(score,ok?null:s.err,s.ans==='out'?null:res.r);
+      panel(h);
+      setActions([{t:'Próximo',c:'primary',f:next}]);
+    });
+  }
+};
+
+/* ══════════ MÓDULO 4 · STOP ══════════ */
+const STOP={
+  lines:true,title:'Posicionamento de Stop',sub:'invalidação de estrutura',tf:'4H',
+  task:'Entrada marcada. <b>Onde vai o stop?</b> Uma linha só.',
+  hint:'toque e arraste sua linha de stop',
+  build(){
+    const long=Math.random()<.5,b=B(Math.random()*1e9,100,1);let base;
+    if(long){
+      b.price=95;drift(b,99,8,.5);base=98.6;
+      for(let i=0;i<3;i++){drift(b,base+.2+i*.35,3,.3);drift(b,base+2.4,3,.35)}
+      b.arr[b.arr.length-1].l=Math.min(b.arr[b.arr.length-1].l,base-.15);
+      impulse(b,4,1,1.05);
+    }else{
+      b.price=105;drift(b,101,8,.5);base=101.4;
+      for(let i=0;i<3;i++){drift(b,base-.2-i*.35,3,.3);drift(b,base-2.4,3,.35)}
+      b.arr[b.arr.length-1].h=Math.max(b.arr[b.arr.length-1].h,base+.15);
+      impulse(b,4,-1,1.05);
+    }
+    const last=b.arr.slice(-16).map(c=>long?c.l:c.h);
+    const extreme=long?Math.min(...last):Math.max(...last);
+    const cut=b.arr.length,entry=b.price;
+    // desfecho: pullback que entra no ruído mas respeita a invalidação, depois segue
+    const pull=long?extreme+b.vol*.35:extreme-b.vol*.35;
+    drift(b,pull,6,.45);
+    b.arr[b.arr.length-1][long?'l':'h']=long?extreme+b.vol*.12:extreme-b.vol*.12;
+    impulse(b,10,long?1:-1,1.15);drift(b,b.price-(long?1:-1)*b.vol*1.4,4,.5);impulse(b,8,long?1:-1,1);
+
+    C.candles=b.arr.slice(0,cut);C.future=b.arr.slice(cut);C.shown=0;
+    C.mark=cut-1;C.lines=[];C.sel=null;C.maxLines=1;C.emaLine=null;C.revealed=false;C.levels=[];C.plan=null;
+    C.zones=[{a:long?base-.05:base+.05,b:long?base+.05:base-.05,fill:'rgba(229,185,60,.35)'}];
+    this.d={long,base,extreme,vol:b.vol,entry};
+    $('task').innerHTML=`Entrada <b>${long?'comprada':'vendida'}</b> no rompimento. <b>Onde vai o stop?</b>`;
+    setActions([{t:'Conferir',c:'primary',f:()=>STOP.check()},
+                {t:'Limpar',c:'ghost',f:()=>{C.lines=[];C.sel=null;syncLine();draw()}}]);
+  },
+  check(){
+    if(!C.lines.length)return;
+    const {long,base,extreme,vol,entry}=this.d,s=C.lines[0];
+    const idealA=long?extreme-vol*.9:extreme+vol*.9,idealB=long?extreme-vol*.2:extreme+vol*.2;
+    const beyond=long?s<extreme:s>extreme;
+    const inside=long?s>base:s<base;
+    const atExt=Math.abs(s-extreme)<vol*.18;
+    const far=long?s<extreme-vol*2.6:s>extreme+vol*2.6;
+    let score,v,ek=null;
+    if(inside){score=0;ek='stop_ruido';
+      v='<b>Stop dentro do desenvolvimento.</b> No meio da zona onde o mercado ainda respira. Vai ser caçado pelo ruído normal antes de a estrutura falhar.'}
+    else if(atExt){score=45;ek='stop_extremo';
+      v='<b>Stop colado na mínima/máxima exata.</b> É justamente onde a liquidez é buscada. Precisa de folga além do extremo.'}
+    else if(far){score=60;ek='stop_largo';
+      v='<b>Stop longe demais.</b> A estrutura já estava invalidada bem antes. Risco inflado sem proteção extra.'}
+    else if(beyond){const d=Math.abs(s-extreme)/vol;score=clamp(Math.round(100-Math.abs(d-.55)*45),72,100);
+      v='<b>Correto.</b> Além do extremo da estrutura, com folga para o ruído. Se for atingido, a sequência de fundos que sustenta o movimento deixou de existir.'}
+    else{score=20;ek='stop_ruido';v='<b>Stop do lado errado.</b> Ele precisa ficar onde invalida a estrutura.'}
+
+    C.locked=true;syncLine();
+    C.zones.push({a:idealA,b:idealB,fill:'rgba(57,255,20,.16)'});
+    C.zones.push({a:base,b:long?base+vol*2.6:base-vol*2.6,fill:'rgba(255,0,144,.09)'});
+    const plan=mkPlan(long?'buy':'sell',entry,s,{
+      gatilho:'no rompimento (já executada)',
+      inval:'o nível que você escolheu',
+      saida:'próxima estrutura · stop carregado por fundo'
+    });
+    C.plan=plan;
+    const res=evalTrade(plan,C.future);
+    playFuture(()=>{
+      const morreu=res.r<0;
+      let h=head(score,'posicionamento',
+        `<span class="u mono" style="color:${res.r>0?'var(--verde)':'var(--magenta)'}">${res.r>0?'+':''}${res.r}R</span>`)+
+        `<div class="verdict">${v}<br><b>${morreu?'Seu stop foi atingido no pullback.':'Seu stop sobreviveu ao pullback e o movimento seguiu.'}</b></div>`;
+      h+=planBox(plan,res,'Trade com o SEU stop');
+      h+=`<div class="lvl"><span class="dot" style="background:var(--verde)"></span>
+        <span class="p mono">${Math.min(idealA,idealB).toFixed(2)} – ${Math.max(idealA,idealB).toFixed(2)} <small>· faixa correta (verde)</small></span>
+        <span class="r mono" style="color:var(--verde)">alvo</span></div>
+        <div class="lvl"><span class="dot" style="background:var(--magenta)"></span>
+        <span class="p mono">zona de ruído <small>· stop morre aqui (vermelho)</small></span>
+        <span class="r mono" style="color:var(--magenta)">evitar</span></div>
+        <div class="lvl"><span class="dot" style="background:var(--gold)"></span>
+        <span class="p mono">${base.toFixed(2)} <small>· ${long?'último fundo mais alto':'último topo mais baixo'}</small></span>
+        <span class="r mono" style="color:var(--gold)">estrutura</span></div>`;
+      h+=ruleBox('Entrada e saída','Stop nunca no meio do desenvolvimento, nunca colado no extremo exato, nunca em preço redondo. Vai no nível que, se atingido, invalida a estrutura — e a distância muda com o tempo gráfico. Saída: parcial em 1,5R, stop para o preço de entrada, resto carregado fundo a fundo.');
+      h+=commit(score,ek,res.r);
+      panel(h);
+      setActions([{t:'Próximo',c:'primary',f:next}]);
+    });
+  }
+};
+
+/* ══════════ DIAGNÓSTICO ══════════ */
+const NAMES={sr:'Suporte / Resistência',candle:'Leitura de Candles',break:'Rompimento',stop:'Stop'};
+function renderDiag(){
+  const el=$('diagview');
+  const total=Object.values(ST.rounds).reduce((a,b)=>a+b,0);
+  if(!total){
+    el.innerHTML=`<div class="diag"><h3>Diagnóstico</h3>
+      <div class="empty">Sem rodadas ainda. Treine nas outras abas e volte aqui: este painel mostra a média por módulo, a expectativa em R e ordena os seus erros recorrentes por frequência.</div></div>`;
+    return;
+  }
+  let h='<div class="diag"><h3>Desempenho por módulo</h3>';
+  Object.keys(NAMES).forEach(k=>{
+    const n=ST.rounds[k]||0,avg=n?Math.round(ST.sum[k]/n):0;
+    const cor=!n?'rgba(255,255,255,.12)':avg>=80?'var(--verde)':avg>=55?'var(--gold)':'var(--magenta)';
+    h+=`<div class="brow"><span style="color:var(--dim)">${NAMES[k]}</span>
+      <span class="bar"><i style="width:${n?avg:0}%;background:${cor}"></i></span>
+      <span class="v mono" style="color:${cor}">${n?avg:'—'}</span></div>
+      <div style="font-size:10px;color:var(--dim);margin:-5px 0 10px 0">${n} rodada(s)</div>`;
+  });
+
+  if(ST.rs.length){
+    const exp=ST.rs.reduce((a,b)=>a+b,0)/ST.rs.length;
+    const win=ST.rs.filter(r=>r>0).length/ST.rs.length*100;
+    const gan=ST.rs.filter(r=>r>0),per=ST.rs.filter(r=>r<0);
+    const payoff=per.length&&gan.length?(gan.reduce((a,b)=>a+b,0)/gan.length)/Math.abs(per.reduce((a,b)=>a+b,0)/per.length):0;
+    h+=`<h3 class="sp">Resultado dos trades simulados</h3>
+    <div class="brow"><span style="color:var(--dim)">Expectativa</span>
+      <span class="bar"><i style="width:${clamp(exp*30+50,2,100)}%;background:${exp>0?'var(--verde)':'var(--magenta)'}"></i></span>
+      <span class="v mono" style="color:${exp>0?'var(--verde)':'var(--magenta)'}">${exp.toFixed(2)}R</span></div>
+    <div class="brow"><span style="color:var(--dim)">Acerto</span>
+      <span class="bar"><i style="width:${win}%;background:var(--ciano)"></i></span>
+      <span class="v mono">${Math.round(win)}%</span></div>
+    <div class="brow"><span style="color:var(--dim)">Payoff</span>
+      <span class="bar"><i style="width:${clamp(payoff*28,2,100)}%;background:var(--gold)"></i></span>
+      <span class="v mono">${payoff?payoff.toFixed(2):'—'}</span></div>
+    <div style="font-size:10.5px;color:var(--dim);line-height:1.5;margin-top:8px">
+      ${ST.rs.length} trade(s). Acerto baixo com payoff alto continua sendo lucrativo — o número que decide é a expectativa, não o percentual de acerto.</div>`;
+  }
+
+  const errs=Object.entries(ST.err).sort((a,b)=>b[1]-a[1]);
+  h+='<h3 class="sp">O que treinar primeiro</h3>';
+  if(!errs.length)h+='<div class="empty">Nenhum erro registrado até agora. Aumente o volume de rodadas para o diagnóstico ficar confiável.</div>';
+  else{
+    errs.slice(0,5).forEach(([k,n],i)=>{
+      const e=ERR[k];if(!e)return;
+      h+=`<div class="err"><span class="k">${i+1}</span>
+        <span class="t">${e.t}</span><span class="c mono">${n}×</span>
+        <span class="d">${e.d}<br><b style="color:var(--gold)">Treinar em: ${e.aba}</b></span></div>`;
+    });
+    const top=ERR[errs[0][0]];
+    if(top)h+=`<div class="rule" style="margin-top:16px"><b>Prioridade</b>
+      Seu erro mais frequente é <b style="display:inline;font-size:inherit;letter-spacing:0;text-transform:none">${top.t.toLowerCase()}</b>. Faça 10 rodadas seguidas na aba ${top.aba} antes de voltar às outras. Erro repetido não some com volume aleatório de treino, some com repetição dirigida.</div>`;
+  }
+  h+=`<div class="session"><span>total <b>${total}</b> rodadas</span>
+    <span><button class="ghost" style="padding:6px 10px;font-size:10.5px" onclick="resetST()">zerar dados</button></span></div></div>`;
+  el.innerHTML=h;
+}
+function resetST(){ST={rounds:{},sum:{},err:{},rs:[]};streak=0;$('streak').textContent=0;saveST();renderDiag()}
+
+/* ══════════ roteador ══════════ */
+const MODES={sr:SR,candle:CANDLE,break:BREAK,stop:STOP};
+function next(){
+  round++;
+  C.revealed=false;C.reveal=0;C.sel=null;C.zones=[];C.maxLines=6;
+  C.future=[];C.shown=0;C.plan=null;C.locked=false;
+  $('result').className='result';syncLine();
+  M=MODES[mode];
+  $('modeTitle').firstChild.nodeValue=M.title;
+  $('modeSub').textContent=M.sub;
+  $('tf').textContent=M.tf;
+  $('task').innerHTML=M.task;
+  $('hint').textContent=M.hint||'';
+  $('hint').style.opacity=M.hint?1:0;
+  $('badge').textContent='rodada '+round;
+  M.build();fit();draw();
+}
+$('tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected','false'));
+  b.setAttribute('aria-selected','true');
+  const m=b.dataset.m;
+  if(m==='diag'){$('trainer').style.display='none';$('diagview').style.display='';renderDiag();return}
+  $('trainer').style.display='';$('diagview').style.display='none';
+  mode=m;round=0;next();resize();
+};
+window.addEventListener('resize',resize);
+window.addEventListener('orientationchange',()=>setTimeout(resize,150));
+if(window.ResizeObserver){let raf=0;
+  new ResizeObserver(()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(resize)}).observe(cv.parentElement)}
+(async()=>{
+  const d=await store.get('spo_v3');
+  if(d){if(d.ST)ST=Object.assign({rounds:{},sum:{},err:{},rs:[]},d.ST);
+        if(d.streak){streak=d.streak;$('streak').textContent=streak}}
+})();
+next();resize();
+</script>
+</body>
+</html>
