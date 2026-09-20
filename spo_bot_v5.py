@@ -152,13 +152,12 @@ def save_resultados(resultados):
 
 def enviar_telegram(msg, modo_sombra):
     token = os.environ.get(CFG["TELEGRAM_TOKEN_ENV"])
-    texto = f"[SOMBRA] {msg}" if modo_sombra else msg
     if not token:
         logging.error("TELEGRAM_TOKEN não definido, mensagem não enviada:")
-        logging.info(texto)
+        logging.info(msg)
         return
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {"chat_id": CFG["TELEGRAM_CHAT_ID"], "text": texto}
+    payload = {"chat_id": CFG["TELEGRAM_CHAT_ID"], "text": msg}
     for tentativa in range(CFG["MAX_RETRIES"]):
         try:
             resp = requests.post(url, json=payload, timeout=10)
@@ -505,20 +504,31 @@ def short_gating_ok(d1, btc_d1_closed):
 # Mensagens
 # --------------------------------------------------------------------------
 
+def fmt(valor):
+    valor = float(valor)
+    abs_valor = abs(valor)
+    if abs_valor >= 1000:
+        return f"{valor:,.0f}".replace(",", ".")
+    elif abs_valor >= 1:
+        return f"{valor:.2f}"
+    else:
+        return f"{valor:.5f}"
+
+
 def gerar_mensagem_entrada(sig, preco_atual):
     seta = "🟢 COMPRAR AGORA" if sig.lado == "LONG" else "🔴 VENDER AGORA"
     ativo = sig.symbol.replace("/USDT", "")
-    alvos_str = " > ".join(f"{a:.6f}" for a in sig.alvos)
+    alvos_str = " > ".join(fmt(a) for a in sig.alvos)
     rr_str = " / ".join(f"{r:.2f}R" for r in sig.rr)
     linhas = [
-        "SPO V5",
+        "SPO ALERTAS",
         f"{seta} — {ativo} (swing)",
         "──────────",
         "📍 Entrada: a mercado",
-        f"🛑 Stop: {sig.stop:.6f}",
+        f"🛑 Stop: {fmt(sig.stop)}",
         f"🎯 Alvos: {alvos_str}",
         f"💡 {sig.motivo}",
-        f"💰 Preço agora: {preco_atual:.6f}",
+        f"💰 Preço agora: {fmt(preco_atual)}",
         f"📊 R:R nos alvos: {rr_str}",
     ]
     if sig.alertas:
@@ -528,22 +538,27 @@ def gerar_mensagem_entrada(sig, preco_atual):
 
 def msg_parcial(symbol, pct, preco, motivo):
     ativo = symbol.replace("/USDT", "")
-    return f"SPO V5\n📦 Parcial {pct}% — {ativo} @ {preco:.6f} ({motivo})"
+    return f"SPO ALERTAS\n📦 Parcial {pct}% — {ativo} @ {fmt(preco)} ({motivo})"
 
 
 def msg_breakeven(symbol):
     ativo = symbol.replace("/USDT", "")
-    return f"SPO V5\n⚖️ Stop movido para entrada (breakeven) — {ativo}"
+    return f"SPO ALERTAS\n⚖️ Stop movido para entrada (breakeven) — {ativo}"
 
 
 def msg_stop(symbol, preco):
     ativo = symbol.replace("/USDT", "")
-    return f"SPO V5\n🛑 Stop atingido — {ativo} @ {preco:.6f}. Posição encerrada."
+    return f"SPO ALERTAS\n🛑 Stop atingido — {ativo} @ {fmt(preco)}. Posição encerrada."
 
 
 def msg_estrutura(symbol, preco):
     ativo = symbol.replace("/USDT", "")
-    return f"SPO V5\n📉 Perda de estrutura no D1 — {ativo} @ {preco:.6f}. Posição encerrada."
+    return f"SPO ALERTAS\n📉 Perda de estrutura no D1 — {ativo} @ {fmt(preco)}. Posição encerrada."
+
+
+def msg_inicializacao(qtd_ativos):
+    agora = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M")
+    return f"SPO ALERTAS\n✅ Bot iniciado — {qtd_ativos} ativos monitorados — {agora} UTC"
 
 
 # --------------------------------------------------------------------------
@@ -794,6 +809,10 @@ def main():
         stream=sys.stdout,
     )
     logging.info("SPO Bot V5 iniciado")
+    try:
+        enviar_telegram(msg_inicializacao(len(CFG["SYMBOLS"])), modo_sombra_ativo())
+    except Exception as e:
+        logging.error(f"falha ao enviar mensagem de inicialização: {e}")
     while True:
         inicio = time.time()
         try:
