@@ -1,0 +1,14 @@
+import { NextResponse } from "next/server";
+import { getServerSupabase } from "@/lib/supabase/server";
+
+/** Magic-link / OAuth redirect target. */
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const code = url.searchParams.get("code");
+  const next = url.searchParams.get("next") ?? "/";
+  if (code) {
+    const supabase = await getServerSupabase();
+    await supabase.auth.exchangeCodeForSession(code);
+  }
+  return NextResponse.redirect(new URL(next.startsWith("/") ? next : "/", url.origin));
+}

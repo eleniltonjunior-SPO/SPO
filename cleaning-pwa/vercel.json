@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/calendar-sync", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/reminders", "schedule": "0 * * * *" }
+  ]
+}
